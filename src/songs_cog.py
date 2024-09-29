@@ -27,6 +27,7 @@ def get_audio_source(url: str):
         'extract_flat': 'in_playlist',
         'noplaylist': True,
         'no_warnings': True,
+        'cookies': 'path/to/your/youtube_cookies.txt',
         'outtmpl': 'downloaded_music/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
