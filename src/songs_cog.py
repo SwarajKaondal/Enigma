@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from src.utils import searchSong, random_25
 from src.songs_queue import Songs_Queue
-import youtube_dl
+import yt_dlp as youtube_dl 
 
 FFMPEG_OPTIONS = {
     'before_options':
@@ -19,6 +19,26 @@ FFMPEG_OPTIONS = {
     ]
 }
 YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist': 'True'}
+
+def get_audio_source(url: str):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'extract_flat': 'in_playlist',
+        'noplaylist': True,
+        'no_warnings': True,
+        'outtmpl': 'downloaded_music/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        audio_url = info['url']
+        return discord.FFmpegPCMAudio(audio_url)
 
 
 class Songs(commands.Cog):
@@ -70,23 +90,37 @@ class Songs(commands.Cog):
     """
 
     async def play_song(self, song_name, ctx):
-        # First stop whatever the bot is playing
-        await self.stop(ctx)
-        try:
-            server = ctx.message.guild
-            voice_channel = server.voice_client
-            url = searchSong(song_name)
-            async with ctx.typing():
-                with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    I_URL = info['formats'][0]['url']
-                    source = await discord.FFmpegOpusAudio.from_probe(
-                        I_URL, **FFMPEG_OPTIONS)
-                    voice_channel.play(source)
-                    voice_channel.is_playing()
-            await ctx.send('**Now playing:** {}'.format(song_name))
-        except Exception as e:
-            await ctx.send("The bot is not connected to a voice channel.")
+        
+        url = searchSong(song_name)
+        print(url)
+        if not ctx.voice_client:
+                await ctx.send("I'm not connected to a voice channel.")
+                return
+
+        # Check if a file is already playing
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+
+        # Play the audio source
+        audio_source = get_audio_source(url)
+        ctx.voice_client.play(audio_source)
+        await ctx.send(f'Now playing: {url}')
+
+        # await self.stop(ctx)
+        # try:
+        #     server = ctx.message.guild
+        #     voice_channel = server.voice_client
+        #     async with ctx.typing():
+        #         with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+        #             info = ydl.extract_info(url, download=False)
+        #             audio_url = info['url']
+        #             source = await discord.FFmpegPCMAudio(audio_url)
+        #             print(source)
+        #             voice_channel.play(source)
+        #             voice_channel.is_playing()
+        #     await ctx.send('**Now playing:** {}'.format(song_name))
+        # except Exception as e:
+        #     await ctx.send("The bot is not connected to a voice channel.")
 
     """
     Helper function to handle empty song queue

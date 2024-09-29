@@ -16,7 +16,7 @@ from src.songs_cog import Songs
 load_dotenv('.env')
 TOKEN = os.getenv('DISCORD_TOKEN')
 # This can be obtained using ctx.message.author.voice.channel
-VOICE_CHANNEL_ID = 1017135653789646851
+VOICE_CHANNEL_ID = 1289631688283918459
 intents = discord.Intents.all()
 intents.members = True
 client = commands.Bot(command_prefix='/', intents=intents)
@@ -37,15 +37,12 @@ async def on_ready():
 Function that is executed once any message is received by the bot
 """
 
-
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
-    options = set()
 
     if message.channel.name == 'general':
-        user_message = str(message.content)
         await client.process_commands(message)
 
 
