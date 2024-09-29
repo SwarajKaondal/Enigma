@@ -12,7 +12,17 @@ from discord.ext import commands
 from src.utils import searchSong
 from src.songs_queue import Songs_Queue
 from src.songs_cog import Songs
+import http.server
+import socketserver
 
+PORT = 8000
+
+Handler = http.server.SimpleHTTPRequestHandler
+
+with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    print(f"Serving at port {PORT}")
+    httpd.serve_forever()
+    
 load_dotenv('.env')
 TOKEN = os.getenv('DISCORD_TOKEN')
 # This can be obtained using ctx.message.author.voice.channel
