@@ -14,15 +14,20 @@ from src.songs_queue import Songs_Queue
 from src.songs_cog import Songs
 import http.server
 import socketserver
-
-PORT = 8000
+import threading
 
 Handler = http.server.SimpleHTTPRequestHandler
+def start_health_check_server():
+    PORT = 8080
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Health check server running on port {PORT}")
+        httpd.serve_forever()
 
-with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print(f"Serving at port {PORT}")
-    httpd.serve_forever()
-    
+# Start the health check server in a separate thread
+thread = threading.Thread(target=start_health_check_server)
+thread.daemon = True
+thread.start()
+
 load_dotenv('.env')
 TOKEN = os.getenv('DISCORD_TOKEN')
 # This can be obtained using ctx.message.author.voice.channel
